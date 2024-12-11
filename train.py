@@ -26,7 +26,7 @@ now = datetime.datetime.now()
 time_str = now.strftime("[%m-%d]-[%H-%M]-")
 
 # 设置使用的设备
-device = 'cuda:0'
+device = 'cuda:3'
 
 # 定义数据集名称和路径
 dataset_name = 'rafdb'
@@ -38,15 +38,17 @@ txt_name = './logs/' + model_name + time_str + '.txt'
 curve_name = './logs/' + model_name + time_str + '.png'
 
 # 设置训练超参数
-net                  = 5
-alpha                = 0.9
+net                  = 13
+#12 8 89.21
+alpha                = 12
+beta                 = 8
 eval                 = False
-lr                   = 0.01
+lr                   = 0.01 
 momentum             = 0.9
 weight_decay         = 1e-4
-epochs               = 50
+epochs               = 100
 ls                   = 15
-batch_size           = 50
+batch_size           = 256
 workers              = 8
 print_freq           = 100
 pretrained           = False
@@ -58,15 +60,16 @@ valdir = os.path.join(data_path, 'test')
 def main():
     best_acc = 0
     start_epoch = 0
-    
-    network_name = 'Model_5'
+     
+    network_name = 'Model_' + str(net)
     print('Training time: ' + now.strftime("%m-%d %H:%M"))
     print('device:    ' + device)
     print('dataset:    ' + dataset_name)
     print('network:    ' + network_name)
+    print('alpha:  ' + str(alpha) + '   beta:  ' + str(beta))
 
     # 初始化模型
-    model = Model_5(num_class=7, device=device)
+    model = Model_13(num_class=7, device=device)
     model = model.to(device)
 
 
@@ -145,9 +148,10 @@ def main():
     
     print('Training time: ' + now.strftime("%m-%d %H:%M"))
     print('device:    ' + device)
-    print('dataset:    ' + dataset_name)
+    print('dataset:    ' + dataset_name) 
     print('network:    ' + network_name)
     print('best_checkpoint_path: ' + best_checkpoint_path)
+    print('alpha:  ' + str(alpha) + '   beta:  ' + str(beta))
 
 
 # 训练函数
@@ -163,7 +167,7 @@ def train(train_loader, model, criterion_cls, optimizer, epoch):
         
         optimizer.zero_grad()  # 清空梯度
         out,heads = model(images)  # 前向传播，得到模型输出
-        loss = (criterion_cls(out, targets) + criterion_cls(heads, targets)) * 10 # 计算损失
+        loss = criterion_cls(out, targets) * alpha + criterion_cls(heads, targets) * beta # 计算损失
         acc = accuracy(out, targets)  # 计算准确率
 
         losses.update(loss.item(), images.size(0))  # 更新平均损失       
@@ -174,7 +178,7 @@ def train(train_loader, model, criterion_cls, optimizer, epoch):
         
         if i % print_freq == 0:
             progress.display(i)  # 每隔一定的步数显示训练进度
-    
+     
     return top1.avg, losses.avg  # 返回平均准确率和平均损失
 
 
@@ -190,7 +194,7 @@ def validate(val_loader, model, criterion_cls):
             targets = targets.to(device)  # 将目标值移动到指定设备上
             images = images.to(device)  # 将输入图像移动到指定设备上
             out,heads = model(images)  # 前向传播，得到模型输出
-            loss = (criterion_cls(out, targets) + criterion_cls(heads, targets)) * 10   # 计算损失
+            loss = criterion_cls(out, targets) * alpha + criterion_cls(heads, targets) * beta    # 计算损失
             acc = accuracy(out, targets)  # 计算准确率
             losses.update(loss.item(), images.size(0))  # 更新平均损失
             top1.update(acc, images.size(0))  # 更新平均准确率
