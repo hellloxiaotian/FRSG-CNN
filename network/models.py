@@ -452,14 +452,6 @@ class Model_5(nn.Module):
         grid = F.affine_grid(theta, x1.size(), align_corners=True)
         #根据输入图片计算变换后图片位置填充的像素值
         x11 = F.grid_sample(x10, grid, align_corners=True)
-        
-        # toPIL = transforms.ToPILImage()
-        # local_fm = toPIL((x11.squeeze()[:3,:,:] + 1) * 127.5)
-        # global_fm = toPIL((x1.squeeze()[:3,:,:] + 1) * 127.5)
-        # local_fm.save("local.jpg")
-        # global_fm.save("global.jpg")
-        save_image(x1, "feature")
-        print("x1:{}, x11:{}".format(x1.size(), x11.size()))
 
         x1=x1+x11
         
